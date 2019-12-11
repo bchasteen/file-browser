@@ -9,7 +9,6 @@ class FileBrowser{
 	
     public function __construct($root=""){
 	    error_reporting(E_ALL);
-        $this->slash = DIRECTORY_SEPARATOR;
         $this->admin = "";
         $this->path = "";
         $this->root = $root;
@@ -23,22 +22,22 @@ class FileBrowser{
         readfile($file);
     }
     public function fileName($file, $dir){
-    	$filename = $dir . $this->slash . $file;
+    	$filename = $dir . DIRECTORY_SEPARATOR . $file;
     	$sLink = "";
         if (filetype($filename) !== "dir") {
             #$sLink = '<a href="'.$this->path.'?view='.urlencode($filename).'">'.$file.'</a>';
             $sExt = strtolower(substr(strrchr($filename,'.'), 1));
             $sLink = ($sExt === 'zip') 
             	? '<a href="'.$this->path.'?extract='.urlencode($filename).'">'.$file.'</a>'
-            	: '<a href="'.$this->path.'?edit='.urlencode($filename).'">'.$file.'</a>';
+            	: '<a href="'.$this->path.'?edit='.urlencode($filename).'">'.$file.' &#9998;</a>';
         } else {
             if ($file == '.') {
-				$sLink = '<a href="'.$this->path.'?dir='.$this->root."\">[ ".$this->slash." ]</a>";
+				$sLink = '<a href="'.$this->path.'?dir='.$this->root."\">[ ".DIRECTORY_SEPARATOR." ]</a>";
             } elseif ($file == '..') {
             	$prev = dirname(dirname($filename));
             	if( strlen(str_replace("..", "", $filename)) < strlen($this->root) )
             		$prev = $this->root;
-                $sLink = '<a href="'.$this->path.'?dir='.urlencode($prev)."\">[ ".$this->slash." ".$this->slash." ]</a>";
+                $sLink = '<a style="font-size:130%;line-height:110%" href="'.$this->path.'?dir='.urlencode($prev)."\">&#8629;</a>";
             } else {
                 $sLink = '<a href="'.$this->path.'?dir='.urlencode($filename).'">'.$file.'</a>';
             }
@@ -57,6 +56,7 @@ class FileBrowser{
         return date("F j, Y, g:i a", $iTimestamp);
     } 
     public function delete_directory($dirname) {
+    	
         if (is_dir($dirname))
             $dir_handle = opendir($dirname);
         if (!$dir_handle)
@@ -81,7 +81,7 @@ class FileBrowser{
     public function deleteFiles($dir, $aFiles){
         if (is_array($aFiles)) {
             foreach ($aFiles as $aFilesNames){
-            	$filename = $dir . $this->slash . $aFilesNames;
+            	$filename = $dir . DIRECTORY_SEPARATOR . $aFilesNames;
                 if (is_dir($filename)) {
                     $this->delete_directory($filename);
                     
@@ -95,7 +95,7 @@ class FileBrowser{
         }
     }
     public function createDirectory($dir, $sCreatefile){
-    	$directory = $dir . $this->slash . $sCreatefile;
+    	$directory = $dir . DIRECTORY_SEPARATOR . $sCreatefile;
         if (!is_dir($directory)) {
             mkdir($directory, 0755, true);
             $this->sMessage = "<div class=\"padding pale-green text-green border\">Directory Created Successfully: \"$directory\"</div>";
@@ -103,20 +103,28 @@ class FileBrowser{
             $this->sError = "<div class=\"padding pale-yellow text-grey border\">\"$directory\" Directory already exist</div>";
         }
     }
-    public function createFile($dir, $sCreatefile){
-    	$filename = $dir . $this->slash . $sCreatefile;
-    	
+    public function createFile($dir, $sCreatefile, $creationNum=1){
+    	$sCreatefile = str_replace("../", "", $sCreatefile);
+    	$filename = $dir . DIRECTORY_SEPARATOR . $sCreatefile;
         if (!file_exists($filename)) {
             if (is_writable($dir)) {
-                $handle = fopen($filename, "w");
-                fclose($handle);
-                $this->sMessage = "File Created Successfully: \"$sCreatefile\" .";
+            	try {
+					if($handle = fopen($filename, "w")){
+						fclose($handle);
+						$this->sMessage = "File Created Successfully: \"$sCreatefile\" in directory: $dir.";
+					} else {
+						throw new Exception('File naming error.');
+					}
+                } catch(Exception $e) {
+                	$this->sError = "Directory Not Writable, Can't Create file!";
+                }
+               
             }else{
                 $this->sError = "Directory Not Writable, Can't Create file.";
             }
-        }
-        else{
-            $this->sError = " \"$sCreatefile\" File already exist.";
+        } else{
+            $this->sError = " \"$sCreatefile\" File already exists.";
+            $this->createFile($dir, $sCreatefile . "($creationNum)", $creationNum+1);
         }
     }
     public function extract($sExtract){
@@ -136,13 +144,13 @@ class FileBrowser{
         }
     }
     public function getCurrentDir($dir){
-        $slugs = array_values(array_filter(explode($this->slash, $dir)));
+        $slugs = array_values(array_filter(explode(DIRECTORY_SEPARATOR, $dir)));
         $ret = [];
         for($i = count($slugs); $i > 0; $i--){
-        	$ret[] = '<a href="?dir=' . $this->slash . urlencode(implode($this->slash, $slugs)) . '">' .  $slugs[$i - 1] . '</a>';
+        	$ret[] = '<a href="?dir=' . DIRECTORY_SEPARATOR . urlencode(implode(DIRECTORY_SEPARATOR, $slugs)) . '">' .  $slugs[$i - 1] . '</a>';
         	array_pop($slugs);
         }
-        return implode($this->slash, array_reverse($ret));
+        return implode(DIRECTORY_SEPARATOR, array_reverse($ret));
     }
     private function writeBackup($sFileName){
         if (!copy($sFileName, $sFileName.".backup")) {
@@ -174,8 +182,8 @@ class FileBrowser{
 		return $written;
     }
     public function uploadFile($dir, $sFileName){
-        if (move_uploaded_file($_FILES['myfile']['tmp_name'], $dir.$sFileName)) {
-            $this->sMessage = "\"$sFileName\" File Successfully Uploaded.";
+        if (move_uploaded_file($_FILES['myfile']['tmp_name'], $dir.DIRECTORY_SEPARATOR.$sFileName)) {
+            $this->sMessage = "<div class=\"padding pale-green text-green\">File: <u>$sFileName</u> Successfully Uploaded to: $dir.\"</div>";
         }
         else{
             $this->sError = "\"$sFileName\" Uploading Error.";
@@ -186,26 +194,26 @@ class FileBrowser{
         	$contents = file_get_contents($sEdit);
     }
     public function showDownload($file, $dir = ""){
-    	$filename = $dir . $this->slash . $file;
+    	$filename = $dir . DIRECTORY_SEPARATOR . $file;
         if (filetype($filename) != "dir") {
-            return '<a href="'.$this->path.'?dwl='.urlencode($filename).'">Download</a>';
+            return '<a href="'.$this->path.'?dwl='.urlencode($filename).'">&#8681; Download</a>';
         }else{
             return '';
         }
     }
     public function showEdit($file, $dir){
-    	$filename = $dir . $this->slash . $file;
+    	$filename = $dir . DIRECTORY_SEPARATOR . $file;
 		$sLink = "";
         if (filetype($filename) != "dir") {
             $sExt = strtolower(substr(strrchr($filename,'.'),1));
             $sLink = ($sExt === 'zip') 
             	? '<a href="'.$this->path.'?extract='.urlencode($filename).'">Unpack</a>'
-            	: '<a href="'.$this->path.'?edit='.urlencode($filename).'">Edit</a>';
+            	: '<a href="'.$this->path.'?edit='.urlencode($filename).'">Edit &#9998;</a>';
         }
         return $sLink;
     }
     public function showFileSize($file, $dir, $precision = 2) {
-    	$filename = $dir . $this->slash . $file;
+    	$filename = $dir . DIRECTORY_SEPARATOR . $file;
     	return filetype($filename) != "dir" ? $this->formatSize(filesize($filename)) : "";
     }
     public function viewFile($file){

@@ -1,27 +1,27 @@
 	<div class="container">
 		<div>{Message}</div>
 		<div class="border padding margin-top margin-bottom">
-			<form action="file-browser.php" method="POST" enctype="multipart/form-data">
+			<form action="" method="POST" enctype="multipart/form-data">
 				<p><input type="text" name="dir" value="{Dir}" style="display:none"/>
-				<input type="file" onKeypress="event.cancelBubble=true;" name="myfile">
-				<input title="Upload selected file to the current working directory" type="Submit"  name="Submit" value="Upload"/></p>
+				<input type="file" onKeypress="event.cancelBubble=true;" name="myfile" class="">
+				<input title="Upload selected file to the current working directory" type="Submit" class="button khaki" name="Submit" value="&#8679; Upload"/></p>
 				<p>
-				<input type="button" name="button" value="Launch Shell Program"  onclick="window.location = '?cmd=ssh'">
+				<input class="button blue" type="button" name="button" value="Launch Shell Program"  onclick="window.location = '?cmd=ssh'">
 				</p>
 			</form>
 		</div>
 		
 		<form action="" method="Post" name="filelist">
-			<div>
+			<div style="overflow:auto;padding-bottom:1em">
 				<div style="width:34%;float:left;">
 					Filename filter:
-					<input name="filt" onKeypress="event.cancelBubble=true;" onkeyup="filter(this)" type="text">
+					<input name="filt" onKeypress="event.cancelBubble=true;" onkeyup="filter(this)" type="text" class="input"/>
 				</div>
 				<div style="width:65%;float:right;">
 					Current Location: {CurrentLocation}
 				</div>
 			</div>
-			<table id="filetable" class="table striped padding" cellpadding="0" cellspacing="0">
+			<table id="filetable" class="table striped padding border-top" cellpadding="0" cellspacing="0">
 				<tr>
 					<th></th>
 					<th>Name</th>
@@ -39,10 +39,10 @@
 					</td>
 				</tr>
 			</table>
-			<br/>
+			<div class="border-top">
 			<p>
 			<input type="text" name="dir" value="{Dir}" style="display:none"/>
-			<input title="Delete selected files and directories."  type="Submit" onclick="return confirm('Are you sure want to delete selected files');" name="button" value="Delete Selected Files">
+			<input title="Delete selected files and directories."  class="button red" type="Submit" onclick="return confirm('Are you sure want to delete selected files');" name="button" value="Delete Selected Files">
 			<!--input title="Download selected files and directories as one zip file"  id="but_Zip" type="Submit" name="Submit" value="Download selected files as zip"-->
 			</p>
 			<p>
@@ -50,10 +50,11 @@
 				
 			</p>
 			<p>
-			<input type="text" name="createfile">
-			<input title="Create directory."  type="Submit" name="button" value="Create Directory">
+			<input type="text" name="createfile" class="input"/>
+			<input title="Create directory." class="button blue" type="Submit" name="button" value="Create Directory">
 			&nbsp;
-			<input title="Create File."  type="Submit" name="button" value="Create File">
+			<input title="Create File."  class="button blue" type="Submit" name="button" value="Create File">
 			</p>
+			</div>
 		</form>
 	</div>
